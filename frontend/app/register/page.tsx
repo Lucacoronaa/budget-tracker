@@ -1,66 +1,73 @@
 "use client";
 
 import { useState } from "react";
-import { API_URL } from "../lib/api";
 import { useRouter } from "next/navigation";
+import { API_URL } from "../lib/api";
 
-type LoginResponse = {
-  ok: boolean;
-  message: string;
-  access_token?: string;
-  token_type?: string;
-  user?: {
-    id: number;
-    email: string;
-  };
+type RegisterResponse = {
+  ok?: boolean;
+  message?: string;
+  detail?: string;
+  user_id?: number;
 };
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
+  async function handleRegister(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setErrorMessage("");
+    setSuccessMessage("");
+
+    if (password.length < 6) {
+      setErrorMessage("La password deve contenere almeno 6 caratteri.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMessage("Le password non coincidono.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
+      const response = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email,
+          email: email.trim().toLowerCase(),
           password,
         }),
       });
 
-      const data: LoginResponse = await response.json();
+      const data: RegisterResponse = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Credenziali non valide");
+        throw new Error(data.detail || data.message || "Errore durante la registrazione");
       }
 
-      if (!data.access_token) {
-        throw new Error("Token non ricevuto dal server");
-      }
+      setSuccessMessage("Account creato correttamente. Ora puoi effettuare il login.");
 
-      localStorage.setItem("access_token", data.access_token);
-      localStorage.setItem("user_email", data.user?.email || "");
-
-      router.push("/dashboard");
+      setTimeout(() => {
+        router.push("/login");
+      }, 1200);
     } catch (error) {
       if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
-        setErrorMessage("Errore imprevisto durante il login");
+        setErrorMessage("Errore imprevisto durante la registrazione.");
       }
     } finally {
       setIsLoading(false);
@@ -76,16 +83,16 @@ export default function LoginPage() {
           </div>
 
           <h1 className="text-3xl font-bold tracking-tight">
-            Budget Tracker
+            Crea account
           </h1>
 
           <p className="mt-3 text-sm text-slate-400">
-            Accedi al tuo account per gestire entrate, uscite e saldo personale.
+            Registrati per iniziare a gestire entrate, uscite e saldo personale.
           </p>
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur">
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleRegister} className="space-y-5">
             <div>
               <label
                 htmlFor="email"
@@ -116,9 +123,28 @@ export default function LoginPage() {
               <input
                 id="password"
                 type="password"
-                placeholder="Inserisci la password"
+                placeholder="Crea una password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
+                required
+                className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="confirmPassword"
+                className="mb-2 block text-sm font-medium text-slate-300"
+              >
+                Conferma password
+              </label>
+
+              <input
+                id="confirmPassword"
+                type="password"
+                placeholder="Ripeti la password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
                 required
                 className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
               />
@@ -130,23 +156,29 @@ export default function LoginPage() {
               </div>
             )}
 
+            {successMessage && (
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+                {successMessage}
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={isLoading}
               className="w-full rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isLoading ? "Accesso in corso..." : "Accedi"}
+              {isLoading ? "Creazione account..." : "Registrati"}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-slate-400">
-            Non hai ancora un account?{" "}
+            Hai già un account?{" "}
             <button
               type="button"
-              onClick={() => router.push("/register")}
+              onClick={() => router.push("/login")}
               className="font-medium text-emerald-400 transition hover:text-emerald-300"
             >
-              Registrati
+              Accedi
             </button>
           </p>
         </div>
