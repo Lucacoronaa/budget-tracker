@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -18,12 +18,17 @@ export const metadata: Metadata = {
     template: "%s | Budget Tracker",
   },
   description: "Tracker finanziario personale per gestire entrate, uscite e saldo.",
-  icons: {
-    icon: "/icon.png",
-    shortcut: "/favicon.ico",
-    apple: "/apple-icon.png",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Budget Tracker",
   },
 };
+
+export const viewport: Viewport = {
+  themeColor: "#020617",
+};
+
 
 export default function RootLayout({
   children,
